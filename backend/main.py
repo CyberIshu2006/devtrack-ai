@@ -5,6 +5,15 @@ from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
 
+# Allow all origins for frontend access
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 @app.get("/")
 def home():
     return {"message": "Server is working"}
@@ -13,13 +22,10 @@ def home():
 def get_user(username: str):
     repos = get_user_repos(username)
 
-    if repos is None or len(repos) == 0:
-        return {
-        "error": "User not found or no public repositories"
-    }
+    if not repos:
+        return {"error": "User not found or no public repositories"}
 
     analysis = analyze_repos(repos)
-
     suggestions = generate_suggestions(
         analysis["total_repos"],
         analysis["total_stars"],
@@ -27,16 +33,9 @@ def get_user(username: str):
     )
 
     return {
-    "username": username,
-    "avatar": repos[0]["owner"]["avatar_url"],
-    "profile": repos[0]["owner"]["html_url"],
-    "analysis": analysis,
-    "suggestions": suggestions
-}
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+        "username": username,
+        "avatar": repos[0]["owner"]["avatar_url"],
+        "profile": repos[0]["owner"]["html_url"],
+        "analysis": analysis,
+        "suggestions": suggestions
+    }
