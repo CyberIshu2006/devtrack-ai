@@ -130,6 +130,7 @@
     <h1>DevTrack AI 🚀</h1>
     <p>Analyze developers like a pro</p>
 
+    <button onclick="loginWithGitHub()">Login with GitHub</button>
     <div class="card">
         <input id="username" placeholder="Enter GitHub username">
         <button id="analyzeBtn" onclick="analyze()">Analyze</button>
@@ -213,6 +214,10 @@ async function analyze() {
 document.getElementById("username").addEventListener("keypress", function(e) {
     if (e.key === "Enter") analyze();
 });
+
+function loginWithGitHub() {
+    window.location.href = "https://devtrack-backend-z7lc.onrender.com/auth/github";
+}
 </script>
 
 </body>
