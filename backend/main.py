@@ -2,11 +2,13 @@ from fastapi import FastAPI, HTTPException
 from backend.github_service import get_user_repos
 from backend.analyzer import analyze_repos, generate_suggestions
 from fastapi.middleware.cors import CORSMiddleware
-import httpx
 from fastapi.responses import RedirectResponse
+import httpx
+import os
 
-CLIENT_ID = "Ov23liuu5aXrrJ3iM0dK"
-CLIENT_SECRET = "9e26c42eb315033738845e26e4e64550e91fa34d"
+# 🔐 Use environment variables (IMPORTANT)
+CLIENT_ID = os.getenv("CLIENT_ID")
+CLIENT_SECRET = os.getenv("CLIENT_SECRET")
 
 app = FastAPI(
     title="DevTrack AI",
@@ -14,44 +16,91 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# CORS (for frontend)
+# 🌐 CORS (allow frontend)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # change to your frontend URL later
+    allow_origins=["*"],  # later replace with your frontend URL
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Health check (important for deployment platforms)
+# ✅ Health check
 @app.get("/")
 def health_check():
     return {"status": "ok", "message": "Server is running"}
 
-# Login Route
+
+# 🔐 GitHub Login Route
 @app.get("/auth/github")
 def github_login():
+    if not CLIENT_ID:
+        raise HTTPException(status_code=500, detail="CLIENT_ID not set")
+
     github_url = f"https://github.com/login/oauth/authorize?client_id={CLIENT_ID}"
     return RedirectResponse(github_url)
 
-# Main API
+
+# 🔐 GitHub Callback Route
+@app.get("/auth/github/callback")
+async def github_callback(code: str):
+    try:
+        async with httpx.AsyncClient() as client:
+            token_res = await client.post(
+                "https://github.com/login/oauth/access_token",
+                headers={"Accept": "application/json"},
+                data={
+                    "client_id": CLIENT_ID,
+                    "client_secret": CLIENT_SECRET,
+                    "code": code
+                }
+            )
+
+        token_json = token_res.json()
+        access_token = token_json.get("access_token")
+
+        if not access_token:
+            raise HTTPException(status_code=400, detail="Failed to get access token")
+
+        async with httpx.AsyncClient() as client:
+            user_res = await client.get(
+                "https://api.github.com/user",
+                headers={"Authorization": f"token {access_token}"}
+            )
+
+        user_data = user_res.json()
+
+        return {
+            "success": True,
+            "data": {
+                "username": user_data.get("login"),
+                "avatar": user_data.get("avatar_url"),
+                "profile": user_data.get("html_url")
+            }
+        }
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"OAuth Error: {str(e)}")
+
+
+# 🚀 Main API Route
 @app.get("/user/{username}")
 def get_user(username: str):
     try:
         repos = get_user_repos(username)
 
-        if not repos:
-            raise HTTPException(
-                status_code=404,
-                detail="User not found or no public repositories"
-            )
+        if repos is None or len(repos) == 0:
+            return {
+                "success": False,
+                "error": "User not found or no public repositories"
+            }
 
         analysis = analyze_repos(repos)
 
         suggestions = generate_suggestions(
-            analysis.get("total_repos", 0),
-            analysis.get("total_stars", 0),
-            analysis.get("languages_used", [])
+            analysis["total_repos"],
+            analysis["total_stars"],
+            analysis["languages_used"]
         )
 
         return {
@@ -65,44 +114,8 @@ def get_user(username: str):
             }
         }
 
-    except HTTPException as e:
-        raise e
-
     except Exception as e:
         raise HTTPException(
             status_code=500,
             detail=f"Internal Server Error: {str(e)}"
         )
-    
-# Callback Route
-
-@app.get("/auth/github/callback")
-async def github_callback(code: str):
-
-    async with httpx.AsyncClient() as client:
-        token_res = await client.post(
-            "https://github.com/login/oauth/access_token",
-            headers={"Accept": "application/json"},
-            data={
-                "client_id": CLIENT_ID,
-                "client_secret": CLIENT_SECRET,
-                "code": code
-            }
-        )
-
-    token_json = token_res.json()
-    access_token = token_json.get("access_token")
-
-    async with httpx.AsyncClient() as client:
-        user_res = await client.get(
-            "https://api.github.com/user",
-            headers={"Authorization": f"token {access_token}"}
-        )
-
-    user_data = user_res.json()
-
-    return {
-        "username": user_data["login"],
-        "avatar": user_data["avatar_url"],
-        "profile": user_data["html_url"]
-    }
