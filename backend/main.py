@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from backend.github_service import get_user_repos
-from analyzer import analyze_repos, generate_suggestions
+from backend.analyzer import analyze_repos, generate_suggestions
 from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
