@@ -105,11 +105,7 @@
     <!-- Toggle -->
     <button onclick="toggleTheme()">🌙 Toggle Mode</button>
 
-    <!-- Disclaimer -->
-    <div id="disclaimerBox" class="card">
-        <p>⚠️ This tool analyzes public GitHub data. Results may not fully reflect developer skills.</p>
-        <button onclick="acceptDisclaimer()">I Agree</button>
-    </div>
+
 
     <!-- Main App -->
     <div id="mainApp">
@@ -137,10 +133,6 @@ function toggleTheme() {
     document.body.classList.toggle("dark");
 }
 
-function acceptDisclaimer() {
-    document.getElementById("disclaimerBox").style.display = "none";
-    document.getElementById("mainApp").style.display = "block";
-}
 
 function submitFeedback() {
     const fb = document.getElementById("feedback").value;
