@@ -2,7 +2,7 @@
 
 DevTrack AI is a full-stack web application that analyzes GitHub profiles and provides actionable insights to improve a developer’s portfolio.
 
----
+
 
 ## Features
 
@@ -13,7 +13,7 @@ DevTrack AI is a full-stack web application that analyzes GitHub profiles and pr
 * Real-time API responses
 * Modern UI with smooth UX
 
----
+
 
 ## Tech Stack
 
@@ -40,12 +40,6 @@ DevTrack AI is a full-stack web application that analyzes GitHub profiles and pr
 
 * Frontend: https://devtrack-frontend-lkmi.onrender.com
 * Backend API: https://devtrack-backend-z7lc.onrender.com
-
-
-
-## Screenshots
-
-(Add screenshots here after taking them)
 
 
 
