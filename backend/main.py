@@ -1,11 +1,11 @@
 from fastapi import FastAPI
-from github_service import get_user_repos
+from backend.github_service import get_user_repos
 from analyzer import analyze_repos, generate_suggestions
 from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
 
-# Allow all origins for frontend access
+# CORS to allow frontend requests
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -22,10 +22,11 @@ def home():
 def get_user(username: str):
     repos = get_user_repos(username)
 
-    if not repos:
+    if repos is None or len(repos) == 0:
         return {"error": "User not found or no public repositories"}
 
     analysis = analyze_repos(repos)
+
     suggestions = generate_suggestions(
         analysis["total_repos"],
         analysis["total_stars"],
