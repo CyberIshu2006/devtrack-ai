@@ -155,56 +155,67 @@ async function analyze() {
         return;
     }
 
-    document.getElementById("result").innerHTML = "<p>🔍 Analyzing GitHub profile...</p>";
+    const resultDiv = document.getElementById("result");
 
-    // ✅ Use your Render backend URL here
-    const response = await fetch(`https://devtrack-backend-z7lc.onrender.com/user/${username}`);
-    const data = await response.json();
-
-    if (data.error) {
-        document.getElementById("result").innerHTML = `
-            <div class="card">
-                <h3 style="color:red;">❌ ${data.error}</h3>
-            </div>
-        `;
-        return;
-    }
-
-    const analysis = data.analysis;
-
-    document.getElementById("result").innerHTML = `
+    resultDiv.innerHTML = `
         <div class="card">
-
-            <div style="text-align:center;">
-                <img src="${data.avatar}" width="80" style="border-radius:50%;">
-                <h2>${username}</h2>
-                <a href="${data.profile}" target="_blank">View Profile</a>
-            </div>
-
-            <div class="stats">
-                <div><strong>${analysis.total_repos}</strong><br>Repos</div>
-                <div><strong>${analysis.total_stars}</strong><br>Stars</div>
-                <div><strong>${analysis.top_language}</strong><br>Top Lang</div>
-            </div>
-
-            <p><strong>Dev Score: ${analysis.dev_score}/100</strong></p>
-
-            <div class="bar-container">
-                <div class="bar" id="scoreBar"></div>
-            </div>
-
-            <h3>Suggestions:</h3>
-            <ul>
-                ${data.suggestions.map(s => `<li>${s}</li>`).join("")}
-            </ul>
-
+            <p>⏳ Analyzing... (wait 30s if first time)</p>
         </div>
     `;
 
-    setTimeout(() => {
-        document.getElementById("scoreBar").style.width = analysis.dev_score + "%";
-    }, 100);
+    try {
+        const response = await fetch(`https://devtrack-backend-z7lc.onrender.com/user/${username}`);
+        const data = await response.json();
+
+        if (!data.success) {
+            throw new Error("User not found");
+        }
+
+        const user = data.data;   // ✅ IMPORTANT FIX
+        const analysis = user.analysis;
+
+        resultDiv.innerHTML = `
+            <div class="card">
+
+                <div style="text-align:center;">
+                    <img src="${user.avatar}" width="80" style="border-radius:50%;">
+                    <h2>${user.username}</h2>
+                    <a href="${user.profile}" target="_blank">View Profile</a>
+                </div>
+
+                <div class="stats">
+                    <div><strong>${analysis.total_repos}</strong><br>Repos</div>
+                    <div><strong>${analysis.total_stars}</strong><br>Stars</div>
+                    <div><strong>${analysis.top_language}</strong><br>Top Lang</div>
+                </div>
+
+                <p><strong>Dev Score: ${analysis.dev_score}/100</strong></p>
+
+                <div class="bar-container">
+                    <div class="bar" id="scoreBar"></div>
+                </div>
+
+                <h3>Suggestions:</h3>
+                <ul>
+                    ${user.suggestions.map(s => `<li>${s}</li>`).join("")}
+                </ul>
+
+            </div>
+        `;
+
+        setTimeout(() => {
+            document.getElementById("scoreBar").style.width = analysis.dev_score + "%";
+        }, 100);
+
+    } catch (error) {
+        resultDiv.innerHTML = `
+            <div class="card">
+                <h3 style="color:red;">❌ ${error.message}</h3>
+            </div>
+        `;
+    }
 }
+
 </script>
 
 </body>
